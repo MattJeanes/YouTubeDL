@@ -4,6 +4,13 @@ Node.js app for downloading and streaming YouTube videos as audio
 #Installation
 Use a command line, change directory to the folder and run `npm install`
 
+You will also need the following executables in the folder
+- youtube-dl.exe (https://rg3.github.io/youtube-dl/)
+- ffmpeg.exe (https://ffmpeg.org/download.html)
+- ffprobe.exe (https://ffmpeg.org/download.html)
+
+Note that YouTubeDL was written on and designed for Windows, but it should work on Linux with some minor changes
+
 #Configuration
 Open up server.js and there are a few variables at the top you can configure, such as max video length, the output folder names and the port that the server runs on.
 
