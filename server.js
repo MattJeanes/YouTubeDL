@@ -97,7 +97,7 @@ function deleteoriginal(id,file){
 
 function fail(id,res,json){
 	delete converts[id];
-	console.log("Convert failed: "+id)
+	console.log("Convert failed on video ID: "+id)
 	res.status(500)
 	res.json(json)
 	
@@ -119,7 +119,7 @@ function fail(id,res,json){
 }
 
 function convert(id,file,res,json){
-	console.log("Converting: "+id)
+	console.log("Converting video ID: "+id)
 	var pass=new PassThrough()
 	converts[id].pass=pass
 	var stream=fs.createWriteStream(getoutputfile(id))
@@ -131,7 +131,7 @@ function convert(id,file,res,json){
 		pass.end()
 		delete converts[id]
 		deleteoriginal(id,file)
-		console.log("Convert finished: "+id)
+		console.log("Convert finished on video ID: "+id)
 	})
 	cmd.on('error',function(err){
 		console.log(err)
@@ -217,7 +217,7 @@ function getjson(id,callback){
 				callback(err,json)
 			})
 		}else{
-			console.log("Downloading data: "+id)
+			console.log("Downloading data for video ID: "+id)
 			var jsonstr=""
 			var dl=spawn("youtube-dl.exe",["--dump-json",
 				"--",
@@ -253,6 +253,7 @@ function getjson(id,callback){
 }
 
 function adddata(o,json){
+	console.log("Video title: "+o.fulltitle)
 	json.title=o.fulltitle
 	json.id=o.id
 	json.duration=o.duration
@@ -303,7 +304,7 @@ app.get("/get", function(req, res){
 						}
 					})
 				}else{
-					console.log("Checking: "+id)
+					console.log("Checking video ID: "+id)
 					check(id,json,function(err){
 						if(err){
 							json.err=err
@@ -327,13 +328,13 @@ app.get("/play", function(req, res){
 	var id=req.query.id
 	if(id){
 		if(converts[id]){
-			console.log("Already converting: "+id)
+			console.log("Already converting video ID: "+id)
 			getinprogress(id,res)
 		}else{
 			var file=getoutputfile(id);
 			fs.exists(file,function(exists){
 				if(exists){
-					console.log("Existing: "+id)
+					console.log("Existing audio found for video ID: "+id)
 					var stream=fs.createReadStream(file)
 					stream.pipe(res)
 					stream.on("end",function(){
