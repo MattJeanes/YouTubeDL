@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Google.Apis.YouTube.v3;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 
@@ -12,14 +15,17 @@ namespace YouTubeDL.Web.Controllers
     public class YouTubeController : Controller
     {
         private readonly YoutubeClient _youtubeClient;
+        private readonly YouTubeService _youtubeService;
         private readonly ILogger<YouTubeController> _logger;
 
         public YouTubeController(
             YoutubeClient youtubeClient,
+            YouTubeService youtubeService,
             ILogger<YouTubeController> logger
             )
         {
             _youtubeClient = youtubeClient;
+            _youtubeService = youtubeService;
             _logger = logger;
         }
 
@@ -42,22 +48,24 @@ namespace YouTubeDL.Web.Controllers
 
                 if (string.IsNullOrEmpty(response.Error))
                 {
-                    var results = await _youtubeClient.Search.GetVideosAsync(id);
-                    var video = results.FirstOrDefault(x => x.Id == id);
+                    var request = _youtubeService.Videos.List(new List<string> { "snippet", "statistics", "contentDetails" });
+                    request.Id = id;
+                    var results = await request.ExecuteAsync(HttpContext.RequestAborted);
+                    var video = results.Items.FirstOrDefault(x => x.Id == id);
                     if (video == null)
                     {
                         response.Error = $"Could not find id {id}, does it exist?";
                     }
                     else
                     {
-                        _logger.LogInformation($"Got video for id {id}: {video.Title}");
-                        response.Title = video.Title;
+                        _logger.LogInformation($"Got video for id {id}: {video.Snippet.Title}");
+                        response.Title = video.Snippet.Title;
                         response.Id = video.Id;
-                        response.Duration = Convert.ToInt32(video.Duration.TotalSeconds);
-                        response.LikeCount = video.Engagement.LikeCount;
-                        response.DislikeCount = video.Engagement.DislikeCount;
-                        response.Description = video.Description;
-                        response.Uploader = video.Author;
+                        response.Duration = Convert.ToInt32(XmlConvert.ToTimeSpan(video.ContentDetails.Duration).TotalSeconds);
+                        response.LikeCount = video.Statistics.LikeCount;
+                        response.DislikeCount = video.Statistics.DislikeCount;
+                        response.Description = video.Snippet.Description;
+                        response.Uploader = video.Snippet.ChannelTitle;
                     }
                 }
 

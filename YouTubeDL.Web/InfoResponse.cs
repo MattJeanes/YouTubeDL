@@ -14,10 +14,10 @@ namespace YouTubeDL.Web
         public int Duration { get; set; }
 
         [JsonPropertyName("like_count")]
-        public long LikeCount { get; set; }
+        public ulong? LikeCount { get; set; }
 
         [JsonPropertyName("dislike_count")]
-        public long DislikeCount { get; set; }
+        public ulong? DislikeCount { get; set; }
 
         [JsonPropertyName("description")]
         public string Description { get; set; }
