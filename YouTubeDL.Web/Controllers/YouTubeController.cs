@@ -50,6 +50,7 @@ namespace YouTubeDL.Web.Controllers
                     }
                     else
                     {
+                        _logger.LogInformation($"Got video for id {id}: {video.Title}");
                         response.Title = video.Title;
                         response.Id = video.Id;
                         response.Duration = Convert.ToInt32(video.Duration.TotalSeconds);
@@ -76,6 +77,7 @@ namespace YouTubeDL.Web.Controllers
             }
             catch (Exception e)
             {
+                _logger.LogError(e, $"Failed to get video for id '{id}'");
                 response.Error = e.Message;
             }
             return response;
@@ -96,7 +98,7 @@ namespace YouTubeDL.Web.Controllers
 
         private async Task<IStreamInfo> GetStreamInfo(string id)
         {
-            return (await _youtubeClient.Videos.Streams.GetManifestAsync(id)).GetAudioOnly().Where(x => x.Container == Container.Mp4).WithHighestBitrate();
+            return (await _youtubeClient.Videos.Streams.GetManifestAsync(id))?.GetAudioOnly().Where(x => x.Container == Container.Mp4).WithHighestBitrate();
         }
     }
 }
