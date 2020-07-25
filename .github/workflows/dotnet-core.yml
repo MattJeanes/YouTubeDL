@@ -1,0 +1,32 @@
+name: Build
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build Docker images
+      run: |
+        for appname in YouTubeDL.Web; do
+          app=`echo $appname | tr '[:upper:]' '[:lower:]'`
+          echo "Building $appname docker"
+          docker build -t $app -f "$appname/Dockerfile" .
+        done
+        
+    - name: Push Docker images
+      run: |
+        echo $GITHUB_TOKEN | docker login docker.pkg.github.com --username MattJeanes --password-stdin
+        for appname in YouTubeDL.Web; do
+          app=`echo $appname | tr '[:upper:]' '[:lower:]'`
+          echo "Deploying $appname"
+          docker tag $app docker.pkg.github.com/mattjeanes/youtubedl/$app:latest
+          docker push docker.pkg.github.com/mattjeanes/youtubedl/$app:latest
+        done
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.ref == 'refs/heads/master'
