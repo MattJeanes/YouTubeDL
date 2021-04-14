@@ -5,7 +5,7 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.407-buster AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.408-buster AS build
 WORKDIR /src
 COPY ["YouTubeDL.Web/YouTubeDL.Web.csproj", "YouTubeDL.Web/"]
 RUN dotnet restore "YouTubeDL.Web/YouTubeDL.Web.csproj"
