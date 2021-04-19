@@ -106,7 +106,7 @@ namespace YouTubeDL.Web.Controllers
 
         private async Task<IStreamInfo> GetStreamInfo(string id)
         {
-            return (await _youtubeClient.Videos.Streams.GetManifestAsync(id))?.GetAudioOnly().Where(x => x.Container == Container.Mp4).WithHighestBitrate();
+            return (await _youtubeClient.Videos.Streams.GetManifestAsync(id))?.GetAudioOnlyStreams().Where(x => x.Container == Container.Mp4).TryGetWithHighestBitrate();
         }
     }
 }
