@@ -1,0 +1,14 @@
+replicaCount: 1
+image:
+  repository: ghcr.io/mattjeanes/youtubedl/youtubedl.web
+  tag: latest
+  pullPolicy: Always
+ingress:
+  path: /
+  pathType: ImplementationSpecific
+resources:
+  requests:
+    memory: "1500Mi"
+    cpu: 100m
+  limits:
+    memory: "1500Mi"

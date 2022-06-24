@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: youtubedl
+  name: youtubedl
+spec: 
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ ternary 1 0 (gt (int .Values.replicaCount) 1) }}
+      maxSurge: 1
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector: 
+    matchLabels: 
+      app: youtubedl
+  template: 
+    metadata: 
+      labels: 
+        app: youtubedl
+        {{- if eq .Values.image.tag "latest" }}
+        date: "{{ now | unixEpoch }}"
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec: 
+      containers: 
+      - image: {{ .Values.image.repository }}:{{ required "image.tag is required" .Values.image.tag }}
+        name: youtubedl
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources: {{ toYaml .Values.resources | nindent 10 }}
+        env:
+        - name: ApiKey
+          valueFrom:
+            secretKeyRef:
+              name: youtubedl
+              key: apiKey
+        ports:
+        - containerPort: 80
+        startupProbe:
+          httpGet:
+            scheme: HTTP
+            port: 80
+            path: /healthz
+          periodSeconds: 5
+          failureThreshold: 6

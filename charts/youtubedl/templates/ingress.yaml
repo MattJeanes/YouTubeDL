@@ -1,0 +1,30 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: youtubedl
+  {{- if .Values.ingress.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+{{- if .Values.ingress.tls }}
+  tls:
+{{ tpl (toYaml .Values.ingress.tls) $ | indent 2 }}
+{{- end }}
+  rules:
+  {{- range .Values.ingress.hosts }}
+  - host: {{ tpl . $}}
+    http:
+      paths:
+      - path: {{ $.Values.ingress.path }}
+        pathType: {{ $.Values.ingress.pathType }}
+        backend:
+          service:
+            name: youtubedl
+            port:
+              number: 80
+  {{- end }}
+{{- end }}
