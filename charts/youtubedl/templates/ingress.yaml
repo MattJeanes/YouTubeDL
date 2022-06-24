@@ -16,7 +16,7 @@ spec:
 {{- end }}
   rules:
   {{- range .Values.ingress.hosts }}
-  - host: {{ tpl . $}}
+  - host: {{ tpl . $ }}
     http:
       paths:
       - path: {{ $.Values.ingress.path }}
