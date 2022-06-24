@@ -8,7 +8,7 @@ ingress:
   pathType: ImplementationSpecific
 resources:
   requests:
-    memory: "1500Mi"
-    cpu: 100m
+    memory: 150Mi
+    cpu: 10m
   limits:
-    memory: "1500Mi"
+    memory: 150Mi
