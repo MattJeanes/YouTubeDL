@@ -74,7 +74,7 @@ jobs:
             --set ingress.hosts[0]="${{ secrets.HOST }}" \
             --set ingress.tls[0].hosts[0]="${{ secrets.HOST }}" \
             --set ingress.tls[0].secretName="youtubedl-tls" \
-            --set ingress.annotations.kubernetes\\.io/ingress.class="nginx" \
+            --set ingress.annotations.kubernetes\\.io/ingress\\.class="nginx" \
             --set ingress.annotations.cert-manager\\.io/cluster-issuer="letsencrypt-prod"
         working-directory: charts
 
