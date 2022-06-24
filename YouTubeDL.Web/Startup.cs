@@ -26,6 +26,7 @@ namespace YouTubeDL.Web
             {
                 ApiKey = Configuration.GetValue<string>("ApiKey")
             }));
+            services.AddHealthChecks();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -40,6 +41,7 @@ namespace YouTubeDL.Web
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("/healthz");
             });
         }
     }
