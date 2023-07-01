@@ -6,6 +6,7 @@
 - Set `ApiKey` environment variable to YouTube API Key
 - Optionally set `MaxSizeMegabytes` environment variable (default 50) to prevent large streams from being loaded
 - Optionally set `TranscodeFormat` environment variable (default '') to transcode before streaming to e.g. `mp3`, `ogg`, etc
+- Optionally set the `AllowUserTranscode` environment variable (default 'false') to allow user selection of transcode format with the `format` query parameter
 
 # Usage
 First use `/get?id=<youtubeid>` to get information about the video and request conversion. It returns a JSON table as a response containing information about the video, any errors and success state

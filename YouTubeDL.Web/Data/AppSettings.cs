@@ -13,5 +13,7 @@ namespace YouTubeDL.Web.Data
 
 
 		public string TranscodeFormat { get; set; }
+
+		public bool AllowUserTranscode { get; set; }
 	}
 }

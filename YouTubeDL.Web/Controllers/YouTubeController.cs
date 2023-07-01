@@ -39,7 +39,14 @@ namespace YouTubeDL.Web.Controllers
 		[HttpGet("/")]
 		public string Get()
 		{
-			return "YouTubeDL\n\nUsage:\n/get?id=<youtubeid>\n/play?id=<youtubeid>";
+			var description = "YouTubeDL\n\nUsage:\n/get?id=<youtubeid>\n/play?id=<youtubeid>";
+
+			if (_settings.AllowUserTranscode)
+			{
+				description += "[&format=<format>]";
+			}
+
+			return description;
 		}
 
 		[HttpGet("/get")]
@@ -104,31 +111,44 @@ namespace YouTubeDL.Web.Controllers
 		}
 
 		[HttpGet("/play")]
-		public async Task PlayVideoAsync(string id)
+		public async Task PlayVideoAsync(string id, [FromQuery] string format = null)
 		{
 			var streamInfo = await GetStreamInfo(id);
 			if (streamInfo == null)
 			{
 				HttpContext.Response.StatusCode = 404;
+				return;
 			}
 			if (streamInfo.Size.MegaBytes > _settings.MaxSizeMegabytes)
 			{
 				HttpContext.Response.StatusCode = 400;
+				return;
 			}
-			var mimeType = string.IsNullOrEmpty(_settings.TranscodeFormat) ? "audio/mpeg" : MimeTypes.GetMimeType($".{_settings.TranscodeFormat}");
+			if (!string.IsNullOrEmpty(format))
+			{
+				if (!_settings.AllowUserTranscode)
+				{
+					HttpContext.Response.StatusCode = 400;
+					return;
+				}
+			}
+			else
+			{
+				format = _settings.TranscodeFormat;
+			}
+			var mimeType = string.IsNullOrEmpty(format) ? "audio/mpeg" : MimeTypes.GetMimeType($".{format}");
 			HttpContext.Response.ContentType = mimeType;
 			if (HttpContext.Request.Headers.Accept.Any(x => x.Split(',').Contains("text/html")))
 			{
 				return; // Browser will request stream again with audio player
 			}
-			if (string.IsNullOrEmpty(_settings.TranscodeFormat))
+			if (string.IsNullOrEmpty(format))
 			{
 				_logger.LogInformation("Streaming id {id} directly", id);
 				await _youtubeClient.Videos.Streams.CopyToAsync(streamInfo, HttpContext.Response.Body);
 			}
 			else
 			{
-				var format = _settings.TranscodeFormat.ToLower();
 				_logger.LogInformation("Transcoding id {id} to {format}", id, format);
 				var container = new Container(format);
 				var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
