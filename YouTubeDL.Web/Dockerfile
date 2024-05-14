@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt install -y ffmpeg && apt clean && rm -rf /var/lib/apt/lists/*
 USER app
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.204 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.300 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["YouTubeDL.Web/YouTubeDL.Web.csproj", "YouTubeDL.Web/"]
