@@ -8,5 +8,17 @@
   "automergeType": "branch",
   "pinDigest": {
     "automerge": true
-  }
+  },
+  "packageRules": [
+    {
+      // Always want to use latest version
+      "matchDepNames": [
+        "ghcr.io/mattjeanes/abyss/abyss.web"
+      ],
+      "matchUpdateTypes": [
+        "pinDigest"
+      ],
+      "enabled": false
+    }
+  ]
 }
