@@ -5,7 +5,7 @@ on:
     - main
     - renovate/*
   pull_request:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       skipBuild:
