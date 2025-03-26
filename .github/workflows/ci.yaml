@@ -55,16 +55,13 @@ jobs:
           repository: MattJeanes/Abyss-Infrastructure
           path: infrastructure
 
-      - name: Azure Login
-        uses: Azure/login@a65d910e8af852a8061c627c456678983e180302 # v2
+      - name: Connect to Kubernetes
+        uses: MattJeanes/Abyss-Infrastructure/.github/actions/connect-k8s@main
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Login to Kubernetes
-        uses: Azure/aks-set-context@feeca6405be94202afcb1c395616ff29b1811b9f # v4
-        with:
-          resource-group: abyss
-          cluster-name: abyss
+          kubeconfig: "${{ secrets.KUBECONFIG }}"
+          hostname: "${{ vars.KUBERNETES_API_HOSTNAME }}"
+          serviceTokenId: ${{ vars.CLOUDFLARE_TUNNEL_SERVICE_TOKEN_ID }}
+          serviceTokenSecret: ${{ secrets.CLOUDFLARE_TUNNEL_SERVICE_TOKEN_SECRET }}
 
       - name: Install YouTubeDL
         run: |
@@ -84,3 +81,6 @@ jobs:
         run: ./WaitKubeCertificate.ps1 -Name "youtubedl-tls"
         shell: pwsh
         working-directory: infrastructure/scripts
+
+      - name: Disconnect from Kubernetes
+        uses: MattJeanes/Abyss-Infrastructure/.github/actions/disconnect-k8s@main
