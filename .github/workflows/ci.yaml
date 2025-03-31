@@ -49,12 +49,6 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - name: Checkout Infrastructure repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        with:
-          repository: MattJeanes/Abyss-Infrastructure
-          path: infrastructure
-
       - name: Connect to Kubernetes
         uses: MattJeanes/Abyss-Infrastructure/.github/actions/connect-k8s@main
         with:
@@ -78,9 +72,9 @@ jobs:
         working-directory: charts
 
       - name: Wait for certificate to be ready
-        run: ./WaitKubeCertificate.ps1 -Name "youtubedl-tls"
-        shell: pwsh
-        working-directory: infrastructure/scripts
+        uses: MattJeanes/Abyss-Infrastructure/.github/actions/wait-kube-certificate@main
+        with:
+          name: "youtubedl-tls"
 
       - name: Disconnect from Kubernetes
         uses: MattJeanes/Abyss-Infrastructure/.github/actions/disconnect-k8s@main
