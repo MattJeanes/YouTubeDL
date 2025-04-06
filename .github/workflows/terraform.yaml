@@ -1,0 +1,68 @@
+name: Terraform
+
+on:
+  push:
+    branches:
+      - renovate/*
+    paths:
+      - terraform/**
+  workflow_dispatch:
+    inputs:
+      runApply:
+        description: "Terraform run apply"
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      runApply:
+        description: "Terraform run apply"
+        default: false
+        type: boolean
+  pull_request:
+    branches:
+      - main
+    paths:
+      - terraform/**
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      
+      - name: Initialize Terraform
+        uses: ./.github/actions/init-terraform
+        with:
+          azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
+          terraformStorageAccountKey: ${{ secrets.TERRAFORM_STORAGE_ACCOUNT_KEY }}
+
+      - name: Set Terraform variables
+        run: |
+          tee terraform.tfvars <<EOF
+          cloudflare_api_token = "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          cloudflare_zone_id = "${{ vars.CLOUDFLARE_ZONE_ID }}"
+          azure_subscription_id = "${{ vars.AZURE_SUBSCRIPTION_ID }}"
+          youtube_api_key = "${{ secrets.YOUTUBE_API_KEY }}"
+          EOF
+        working-directory: terraform
+
+      - name: Terraform Plan
+        run: tofu plan -lock=false -out tfplan
+        working-directory: terraform
+        env:
+          ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Validate and Apply
+        run: tofu apply tfplan
+        working-directory: terraform
+        env:
+          ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        if: github.event.inputs.runApply == 'true' || inputs.runApply
