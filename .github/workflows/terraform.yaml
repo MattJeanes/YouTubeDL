@@ -12,12 +12,20 @@ on:
         description: "Terraform run apply"
         default: false
         type: boolean
+      image_sha:
+        description: "Docker image SHA to deploy"
+        required: false
+        type: string
   workflow_call:
     inputs:
       runApply:
         description: "Terraform run apply"
         default: false
         type: boolean
+      image_sha:
+        description: "Docker image SHA to deploy"
+        required: false
+        type: string
   pull_request:
     branches:
       - main
@@ -52,6 +60,7 @@ jobs:
           cloudflare_zone_id = "${{ vars.CLOUDFLARE_ZONE_ID }}"
           azure_subscription_id = "${{ vars.AZURE_SUBSCRIPTION_ID }}"
           youtube_api_key = "${{ secrets.YOUTUBE_API_KEY }}"
+          image_sha = "${{ github.event.inputs.image_sha || inputs.image_sha || '' }}"
           EOF
         working-directory: terraform
 

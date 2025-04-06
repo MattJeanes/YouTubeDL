@@ -17,6 +17,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    outputs:
+      image_sha: ${{ steps.push_image.outputs.image_sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
@@ -30,17 +32,23 @@ jobs:
         if: github.event.inputs.skipBuild != 'true'
 
       - name: Push Docker images
+        id: push_image
         run: |
-          echo $GITHUB_TOKEN | docker login docker.pkg.github.com --username MattJeanes --password-stdin
+          echo $GITHUB_TOKEN | docker login ghcr.io --username MattJeanes --password-stdin
           for appname in YouTubeDL.Web; do
             app=`echo $appname | tr '[:upper:]' '[:lower:]'`
             echo "Deploying $appname"
-            docker tag $app docker.pkg.github.com/mattjeanes/youtubedl/$app:latest
-            docker push docker.pkg.github.com/mattjeanes/youtubedl/$app:latest
+            docker tag $app ghcr.io/mattjeanes/youtubedl/$app:latest
+            docker push ghcr.io/mattjeanes/youtubedl/$app:latest
+            
+            # Get the image SHA and set it as output
+            IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/mattjeanes/youtubedl/$app:latest | cut -d'@' -f2)
+            echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.ref == 'refs/heads/main' && github.event.inputs.skipBuild != 'true'
+
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: build
@@ -48,41 +56,5 @@ jobs:
     uses: ./.github/workflows/terraform.yaml
     with:
       runApply: true
+      image_sha: ${{ needs.build.outputs.image_sha }}
     secrets: inherit
-  # deploy:
-  #   if: github.ref == 'refs/heads/main'
-  #   name: Deploy
-  #   needs: [build]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      # - name: Connect to Kubernetes
-      #   uses: MattJeanes/Abyss-Infrastructure/.github/actions/connect-k8s@main
-      #   with:
-      #     kubeconfig: "${{ secrets.KUBECONFIG }}"
-      #     hostname: "${{ vars.KUBERNETES_API_HOSTNAME }}"
-      #     serviceTokenId: ${{ vars.CLOUDFLARE_TUNNEL_SERVICE_TOKEN_ID }}
-      #     serviceTokenSecret: ${{ secrets.CLOUDFLARE_TUNNEL_SERVICE_TOKEN_SECRET }}
-
-      # - name: Install YouTubeDL
-      #   run: |
-      #     helm upgrade --install --wait --atomic --debug --timeout 10m0s \
-      #       youtubedl ./youtubedl \
-      #       --namespace default \
-      #       --set apiKey="${{ secrets.YOUTUBE_API_KEY }}" \
-      #       --set ingress.enabled=true \
-      #       --set ingress.hosts[0]="${{ vars.HOST }}" \
-      #       --set ingress.tls[0].hosts[0]="${{ vars.HOST }}" \
-      #       --set ingress.tls[0].secretName="youtubedl-tls" \
-      #       --set ingress.annotations.kubernetes\\.io/ingress\\.class="nginx" \
-      #       --set ingress.annotations.cert-manager\\.io/cluster-issuer="letsencrypt-prod"
-      #   working-directory: charts
-
-      # - name: Wait for certificate to be ready
-      #   uses: MattJeanes/Abyss-Infrastructure/.github/actions/wait-kube-certificate@main
-      #   with:
-      #     name: "youtubedl-tls"
-
-      # - name: Disconnect from Kubernetes
-      #   uses: MattJeanes/Abyss-Infrastructure/.github/actions/disconnect-k8s@main
