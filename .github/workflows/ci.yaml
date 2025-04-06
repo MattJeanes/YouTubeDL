@@ -43,12 +43,18 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event.inputs.skipBuild != 'true'
   deploy:
     if: github.ref == 'refs/heads/main'
-    name: Deploy
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
+    name: Terraform Infrastructure
+    uses: ./.github/workflows/terraform.yaml
+    with:
+      runApply: true
+    secrets: inherit
+  # deploy:
+  #   if: github.ref == 'refs/heads/main'
+  #   name: Deploy
+  #   needs: [build]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       
 
       # - name: Connect to Kubernetes
