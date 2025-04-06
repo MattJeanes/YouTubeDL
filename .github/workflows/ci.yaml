@@ -43,7 +43,8 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event.inputs.skipBuild != 'true'
   deploy:
     if: github.ref == 'refs/heads/main'
-    name: Terraform Infrastructure
+    needs: build
+    name: Deploy
     uses: ./.github/workflows/terraform.yaml
     with:
       runApply: true
@@ -55,7 +56,6 @@ jobs:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      
 
       # - name: Connect to Kubernetes
       #   uses: MattJeanes/Abyss-Infrastructure/.github/actions/connect-k8s@main
