@@ -45,7 +45,7 @@ resource "azurerm_container_app_custom_domain" "main" {
     ignore_changes = [certificate_binding_type, container_app_environment_certificate_id]
   }
 
-  name             = "${cloudflare_dns_record.main.name}.${data.cloudflare_zone.main.name}"
+  name             = cloudflare_dns_record.main.name
   container_app_id = azurerm_container_app.main.id
 
   depends_on = [

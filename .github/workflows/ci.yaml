@@ -7,11 +7,6 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-    inputs:
-      skipBuild:
-        description: "Skip Build (deploy only)"
-        required: true
-        default: "false"
 
 jobs:
   build:
@@ -29,7 +24,6 @@ jobs:
             echo "Building $appname docker"
             docker build -t $app -f "$appname/Dockerfile" .
           done
-        if: github.event.inputs.skipBuild != 'true'
 
       - name: Push Docker images
         id: push_image
@@ -47,7 +41,7 @@ jobs:
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: github.ref == 'refs/heads/main' && github.event.inputs.skipBuild != 'true'
+        if: github.ref == 'refs/heads/main'
 
   deploy:
     if: github.ref == 'refs/heads/main'
