@@ -17,10 +17,6 @@ resource "azurerm_container_app" "main" {
       image  = var.image_sha != "" ? "ghcr.io/mattjeanes/youtubedl/youtubedl.web@${var.image_sha}" : "ghcr.io/mattjeanes/youtubedl/youtubedl.web:${var.image_tag}"
       cpu    = 0.25
       memory = "0.5Gi"
-      env {
-        name        = "ApiKey"
-        secret_name = "api-key"
-      }
     }
   }
 

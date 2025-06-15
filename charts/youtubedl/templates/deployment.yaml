@@ -30,12 +30,6 @@ spec:
         name: youtubedl
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources: {{ toYaml .Values.resources | nindent 10 }}
-        env:
-        - name: ApiKey
-          valueFrom:
-            secretKeyRef:
-              name: youtubedl
-              key: apiKey
         ports:
         - containerPort: 8080
         startupProbe:

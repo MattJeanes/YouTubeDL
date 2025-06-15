@@ -1,12 +1,11 @@
-using Google.Apis.Services;
-using Google.Apis.YouTube.v3;
+using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using YouTubeDL.Web.Data;
-using YoutubeExplode;
+using YoutubeDLSharp;
 
 namespace YouTubeDL.Web
 {
@@ -22,11 +21,15 @@ namespace YouTubeDL.Web
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddControllers();
-			services.AddTransient<YoutubeClient>();
-			services.AddTransient(_ => new YouTubeService(new BaseClientService.Initializer
+			services.AddSingleton(provider =>
 			{
-				ApiKey = Configuration.GetValue<string>("ApiKey")
-			}));
+				var ytdl = new YoutubeDL
+				{
+					OutputFolder = Path.GetTempPath(),
+					OutputFileTemplate = "[%(id)s].%(ext)s"
+				};
+				return ytdl;
+			});
 			services.AddOptions<AppSettings>()
 				.Bind(Configuration)
 				.ValidateDataAnnotations()

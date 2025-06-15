@@ -1,37 +1,30 @@
-﻿using Google.Apis.YouTube.v3;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
 using YouTubeDL.Web.Data;
-using YoutubeExplode;
-using YoutubeExplode.Converter;
-using YoutubeExplode.Videos.Streams;
+using YoutubeDLSharp;
+using YoutubeDLSharp.Metadata;
+using YoutubeDLSharp.Options;
 
 namespace YouTubeDL.Web.Controllers
 {
 	public class YouTubeController : Controller
 	{
-		private readonly YoutubeClient _youtubeClient;
-		private readonly YouTubeService _youtubeService;
+		private readonly YoutubeDL _youtubeDl;
 		private readonly ILogger<YouTubeController> _logger;
 		private readonly AppSettings _settings;
 
 		public YouTubeController(
-			YoutubeClient youtubeClient,
-			YouTubeService youtubeService,
+			YoutubeDL youtubeDl,
 			ILogger<YouTubeController> logger,
 			IOptions<AppSettings> settings
 			)
 		{
-			_youtubeClient = youtubeClient;
-			_youtubeService = youtubeService;
+			_youtubeDl = youtubeDl;
 			_logger = logger;
 			_settings = settings.Value;
 		}
@@ -62,37 +55,33 @@ namespace YouTubeDL.Web.Controllers
 
 				if (string.IsNullOrEmpty(response.Error))
 				{
-					var request = _youtubeService.Videos.List(new List<string> { "snippet", "statistics", "contentDetails" });
-					request.Id = id;
-					var results = await request.ExecuteAsync(HttpContext.RequestAborted);
-					var video = results.Items.FirstOrDefault(x => x.Id == id);
-					if (video == null)
+					var result = await _youtubeDl.RunVideoDataFetch(id);
+					if (!result.Success || result.Data == null)
 					{
 						response.Error = $"Could not find id {id}, does it exist?";
 					}
 					else
 					{
-						_logger.LogInformation("Got video for id {id}: {title}", id, video.Snippet.Title);
-						response.Title = video.Snippet.Title;
-						response.Id = video.Id;
-						response.Duration = Convert.ToInt32(XmlConvert.ToTimeSpan(video.ContentDetails.Duration).TotalSeconds);
-						response.LikeCount = video.Statistics.LikeCount;
-						response.DislikeCount = video.Statistics.DislikeCount;
-						response.Description = video.Snippet.Description;
-						response.Uploader = video.Snippet.ChannelTitle;
+						var data = result.Data;
+						response.Title = data.Title;
+						response.Id = data.ID;
+						response.Duration = (int)data.Duration;
+						response.Description = data.Description;
+						response.Uploader = data.Uploader;
 					}
 				}
 
 				if (string.IsNullOrEmpty(response.Error))
 				{
-					var streamInfo = await GetStreamInfo(id);
-					if (streamInfo.Size.MegaBytes > _settings.MaxSizeMegabytes)
-					{
-						response.Error = $"Audio stream is too large ({Math.Round(streamInfo.Size.MegaBytes, 1)} MB), max size is {_settings.MaxSizeMegabytes} MB";
-					}
-					if (streamInfo == null)
+					var audioFormat = await GetBestAudioFormat(id);
+					if (audioFormat == null)
 					{
 						response.Error = $"Could not find suitable audio stream for id {id}";
+					}
+					else if ((audioFormat.FileSize ?? 0) > _settings.MaxSizeMegabytes * 1024 * 1024)
+					{
+						var sizeMB = Math.Round(((audioFormat.FileSize ?? 0) / 1024.0 / 1024.0), 1);
+						response.Error = $"Audio stream is too large ({sizeMB} MB), max size is {_settings.MaxSizeMegabytes} MB";
 					}
 				}
 
@@ -107,19 +96,18 @@ namespace YouTubeDL.Web.Controllers
 				response.Error = e.Message;
 			}
 			return response;
-
 		}
 
 		[HttpGet("/play")]
 		public async Task PlayVideoAsync(string id, [FromQuery] string format = null)
 		{
-			var streamInfo = await GetStreamInfo(id);
-			if (streamInfo == null)
+			var audioFormat = await GetBestAudioFormat(id);
+			if (audioFormat == null)
 			{
 				HttpContext.Response.StatusCode = 404;
 				return;
 			}
-			if (streamInfo.Size.MegaBytes > _settings.MaxSizeMegabytes)
+			if ((audioFormat.FileSize ?? 0) > _settings.MaxSizeMegabytes * 1024 * 1024)
 			{
 				HttpContext.Response.StatusCode = 400;
 				return;
@@ -142,41 +130,42 @@ namespace YouTubeDL.Web.Controllers
 			{
 				return; // Browser will request stream again with audio player
 			}
-			if (string.IsNullOrEmpty(format))
+			_logger.LogInformation("Downloading audio from video id {id}", id);
+			var audioFormatEnum = AudioConversionFormat.Mp3;
+			if (!string.IsNullOrEmpty(format))
 			{
-				_logger.LogInformation("Streaming id {id} directly", id);
-				await _youtubeClient.Videos.Streams.CopyToAsync(streamInfo, HttpContext.Response.Body);
+				Enum.TryParse(format, true, out audioFormatEnum);
 			}
-			else
+			string filePath = null;
+			try
 			{
-				_logger.LogInformation("Transcoding id {id} to {format}", id, format);
-				var container = new Container(format);
-				var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-				try
+				var result = await _youtubeDl.RunAudioDownload(id, audioFormatEnum);
+				if (!result.Success)
 				{
-					await _youtubeClient.Videos.DownloadAsync(new List<IStreamInfo> { streamInfo }, new ConversionRequestBuilder(tempFilename).SetContainer(container).Build());
-
-					_logger.LogInformation("Transcoding id {id} complete, streaming", id);
-					await using var fileStream = System.IO.File.OpenRead(tempFilename);
-					await fileStream.CopyToAsync(HttpContext.Response.Body);
+					_logger.LogError("Failed to download video id {id}: {error}", id, string.Join(Environment.NewLine, result.ErrorOutput));
+					HttpContext.Response.StatusCode = 500;
+					return;
 				}
-				finally
+				filePath = result.Data;
+				await using var fileStream = System.IO.File.OpenRead(filePath);
+				await fileStream.CopyToAsync(HttpContext.Response.Body);
+			}
+			finally
+			{
+				if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
 				{
-					if (System.IO.File.Exists(tempFilename))
-					{
-						System.IO.File.Delete(tempFilename);
-					}
+					System.IO.File.Delete(filePath);
 				}
 			}
 		}
 
-		private async Task<IStreamInfo> GetStreamInfo(string id)
+		private async Task<FormatData> GetBestAudioFormat(string id)
 		{
-			var manifest = await _youtubeClient.Videos.Streams.GetManifestAsync(id);
-			if (manifest == null) { return null; }
-			var audioOnlyStreams = manifest.GetAudioOnlyStreams();
-			var stream = audioOnlyStreams.Where(x => x.Container == Container.Mp4).TryGetWithHighestBitrate();
-			return stream;
+			var result = await _youtubeDl.RunVideoDataFetch(id);
+			if (!result.Success || result.Data == null) return null;
+			return result.Data.Formats?.Where(f => f.AudioCodec != null && (f.VideoCodec == null || f.VideoCodec == "none"))
+				.OrderByDescending(f => f.AudioBitrate ?? 0)
+				.FirstOrDefault();
 		}
 	}
 }
