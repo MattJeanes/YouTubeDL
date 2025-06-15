@@ -101,17 +101,6 @@ namespace YouTubeDL.Web.Controllers
 		[HttpGet("/play")]
 		public async Task PlayVideoAsync(string id, [FromQuery] string format = null)
 		{
-			var audioFormat = await GetBestAudioFormat(id);
-			if (audioFormat == null)
-			{
-				HttpContext.Response.StatusCode = 404;
-				return;
-			}
-			if ((audioFormat.FileSize ?? 0) > _settings.MaxSizeMegabytes * 1024 * 1024)
-			{
-				HttpContext.Response.StatusCode = 400;
-				return;
-			}
 			if (!string.IsNullOrEmpty(format))
 			{
 				if (!_settings.AllowUserTranscode)
@@ -129,6 +118,17 @@ namespace YouTubeDL.Web.Controllers
 			if (HttpContext.Request.Headers.Accept.Any(x => x.Split(',').Contains("text/html")))
 			{
 				return; // Browser will request stream again with audio player
+			}
+			var audioFormat = await GetBestAudioFormat(id);
+			if (audioFormat == null)
+			{
+				HttpContext.Response.StatusCode = 404;
+				return;
+			}
+			if ((audioFormat.FileSize ?? 0) > _settings.MaxSizeMegabytes * 1024 * 1024)
+			{
+				HttpContext.Response.StatusCode = 400;
+				return;
 			}
 			_logger.LogInformation("Downloading audio from video id {id}", id);
 			var audioFormatEnum = AudioConversionFormat.Mp3;
