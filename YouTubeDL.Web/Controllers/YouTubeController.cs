@@ -56,9 +56,9 @@ namespace YouTubeDL.Web.Controllers
 				if (string.IsNullOrEmpty(response.Error))
 				{
 					var result = await _youtubeDl.RunVideoDataFetch(id);
-					if (!result.Success || result.Data == null)
+					if (!result.Success)
 					{
-						response.Error = $"Could not find id {id}, does it exist?";
+						response.Error = $"Failed to fetch video data for id {id}: {string.Join(Environment.NewLine, result.ErrorOutput)}";
 					}
 					else
 					{
