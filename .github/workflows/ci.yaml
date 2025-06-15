@@ -19,26 +19,22 @@ jobs:
 
       - name: Build Docker images
         run: |
-          for appname in YouTubeDL.Web; do
-            app=`echo $appname | tr '[:upper:]' '[:lower:]'`
-            echo "Building $appname docker"
-            docker build -t $app -f "$appname/Dockerfile" .
-          done
+          app="youtubedl-web"
+          echo "Building $app"
+          docker build -t $app -f "YouTubeDL.Web/Dockerfile" .
 
       - name: Push Docker images
         id: push_image
         run: |
           echo $GITHUB_TOKEN | docker login ghcr.io --username MattJeanes --password-stdin
-          for appname in YouTubeDL.Web; do
-            app=`echo $appname | tr '[:upper:]' '[:lower:]'`
-            echo "Deploying $appname"
-            docker tag $app ghcr.io/mattjeanes/youtubedl/$app:latest
-            docker push ghcr.io/mattjeanes/youtubedl/$app:latest
-            
-            # Get the image SHA and set it as output
-            IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/mattjeanes/youtubedl/$app:latest | cut -d'@' -f2)
-            echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
-          done
+          app="youtubedl-web"
+          echo "Pushing $app"
+          docker tag $app ghcr.io/mattjeanes/youtubedl/$app:latest
+          docker push ghcr.io/mattjeanes/youtubedl/$app:latest
+          
+          # Get the image SHA and set it as output
+          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/mattjeanes/youtubedl/$app:latest | cut -d'@' -f2)
+          echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.ref == 'refs/heads/main'
