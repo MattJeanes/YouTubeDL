@@ -5,7 +5,12 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt install -y ffmpeg && apt clean && rm -rf /var/lib/apt/lists/*
+RUN apt update && \
+  apt install -y curl ffmpeg && \
+  apt clean && \
+  rm -rf /var/lib/apt/lists/*
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+  chmod a+rx /usr/local/bin/yt-dlp
 USER app
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0@sha256:faa2daf2b72cbe787ee1882d9651fa4ef3e938ee56792b8324516f5a448f3abe AS build
