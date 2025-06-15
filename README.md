@@ -2,7 +2,7 @@
 .NET Core app for streaming YouTube videos as audio
 
 # Installation
-- Pull [Docker image](https://github.com/MattJeanes/YouTubeDL/packages/328682?version=latest)
+- Pull [Docker image](https://github.com/users/MattJeanes/packages/container/package/youtubedl%2Fyoutubedl-web)
 - Optionally set `MaxSizeMegabytes` environment variable (default 50) to prevent large streams from being loaded
 - Optionally set `TranscodeFormat` environment variable (default '') to transcode before streaming to e.g. `mp3`, `ogg`, etc
 - Optionally set the `AllowUserTranscode` environment variable (default 'false') to allow user selection of transcode format with the `format` query parameter
