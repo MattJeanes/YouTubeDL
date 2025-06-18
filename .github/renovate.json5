@@ -13,7 +13,7 @@
     {
       // Always want to use latest version
       "matchDepNames": [
-        "ghcr.io/mattjeanes/youtubedl/youtubedl-web"
+        "ghcr.io/amyjeanes/youtubedl/youtubedl-web"
       ],
       "matchUpdateTypes": [
         "pinDigest"

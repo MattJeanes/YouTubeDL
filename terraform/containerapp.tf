@@ -14,7 +14,7 @@ resource "azurerm_container_app" "main" {
   template {
     container {
       name   = "youtubedl-web"
-      image  = var.image_sha != "" ? "ghcr.io/mattjeanes/youtubedl/youtubedl-web@${var.image_sha}" : "ghcr.io/mattjeanes/youtubedl/youtubedl-web:${var.image_tag}"
+      image  = var.image_sha != "" ? "ghcr.io/amyjeanes/youtubedl/youtubedl-web@${var.image_sha}" : "ghcr.io/amyjeanes/youtubedl/youtubedl-web:${var.image_tag}"
       cpu    = 0.25
       memory = "0.5Gi"
     }

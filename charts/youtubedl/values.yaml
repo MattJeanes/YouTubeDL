@@ -1,6 +1,6 @@
 replicaCount: 1
 image:
-  repository: ghcr.io/mattjeanes/youtubedl/youtubedl-web
+  repository: ghcr.io/amyjeanes/youtubedl/youtubedl-web
   tag: latest
   pullPolicy: Always
 ingress:

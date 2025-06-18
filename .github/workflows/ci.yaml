@@ -26,14 +26,14 @@ jobs:
       - name: Push Docker images
         id: push_image
         run: |
-          echo $GITHUB_TOKEN | docker login ghcr.io --username MattJeanes --password-stdin
+          echo $GITHUB_TOKEN | docker login ghcr.io --username AmyJeanes --password-stdin
           app="youtubedl-web"
           echo "Pushing $app"
-          docker tag $app ghcr.io/mattjeanes/youtubedl/$app:latest
-          docker push ghcr.io/mattjeanes/youtubedl/$app:latest
+          docker tag $app ghcr.io/amyjeanes/youtubedl/$app:latest
+          docker push ghcr.io/amyjeanes/youtubedl/$app:latest
           
           # Get the image SHA and set it as output
-          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/mattjeanes/youtubedl/$app:latest | cut -d'@' -f2)
+          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/amyjeanes/youtubedl/$app:latest | cut -d'@' -f2)
           echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
